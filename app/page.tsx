@@ -1,58 +1,100 @@
-import Image from "next/image";
-import CtaLink from "./components/CtaLink";
-import InlineLink from "./components/InlineLink";
-import { withUtm } from "./lib/utm";
+import Link from "next/link";
+import Hero from "@/components/Hero";
+import ProductCard from "@/components/ProductCard";
+import { Reveal, Stagger, StaggerItem } from "@/components/motion";
+import {
+  CATEGORIES,
+  getAppleHighlights,
+  getBelieveProducts,
+} from "@/lib/products";
 
 export default function Home() {
+  const apple = getAppleHighlights();
+  const believe = getBelieveProducts().slice(0, 4);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <InlineLink
-              href={withUtm("https://vercel.com/templates?framework=next.js")}
+    <div>
+      <Hero />
+
+      {/* Apple en vedette (iPhone + Mac) */}
+      <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
+        <Reveal>
+          <div className="mb-6 flex items-end justify-between">
+            <div>
+              <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                Apple en vedette
+              </h2>
+              <p className="mt-1 text-zinc-500">
+                Les derniers iPhone et Mac, au cœur de la boutique.
+              </p>
+            </div>
+            <Link
+              href="/products?category=iphone"
+              className="hidden text-sm font-medium text-blue-600 sm:block"
             >
-              Templates
-            </InlineLink>{" "}
-            or the{" "}
-            <InlineLink href={withUtm("https://nextjs.org/learn")}>
-              Learning
-            </InlineLink>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <CtaLink href={withUtm("https://vercel.com/new")}>
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </CtaLink>
-          <CtaLink href={withUtm("https://nextjs.org/docs")} variant="secondary">
-            Documentation
-          </CtaLink>
-        </div>
-      </main>
+              Tous les iPhone →
+            </Link>
+          </div>
+        </Reveal>
+        <Stagger className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          {apple.map((product) => (
+            <StaggerItem key={product.slug} className="h-full">
+              <ProductCard product={product} />
+            </StaggerItem>
+          ))}
+        </Stagger>
+      </section>
+
+      {/* Bannière Believe */}
+      <section className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+        <Reveal>
+          <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-600 px-6 py-12 text-white sm:px-12">
+            <span className="text-sm font-medium uppercase tracking-widest text-white/70">
+              Ambassadeur officiel
+            </span>
+            <h2 className="mt-2 max-w-lg text-3xl font-semibold tracking-tight">
+              Believe : chargeurs, écouteurs, câbles & powerbanks
+            </h2>
+            <p className="mt-3 max-w-lg text-white/80">
+              Une gamme fiable et abordable que nous représentons fièrement.
+            </p>
+            <Link
+              href="/products?category=believe"
+              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-white px-6 font-medium text-indigo-700 transition-transform hover:scale-105"
+            >
+              Découvrir Believe
+            </Link>
+          </div>
+        </Reveal>
+        <Stagger className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {believe.map((product) => (
+            <StaggerItem key={product.slug} className="h-full">
+              <ProductCard product={product} />
+            </StaggerItem>
+          ))}
+        </Stagger>
+      </section>
+
+      {/* Catégories */}
+      <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
+        <Reveal>
+          <h2 className="mb-6 text-2xl font-semibold tracking-tight sm:text-3xl">
+            Explorer par catégorie
+          </h2>
+        </Reveal>
+        <Stagger className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {CATEGORIES.map((c) => (
+            <StaggerItem key={c.id} className="h-full">
+              <Link
+                href={`/products?category=${c.id}`}
+                className="flex h-full items-center justify-center rounded-2xl border border-black/[.06] bg-white p-6 text-center font-medium transition-shadow hover:shadow-md dark:border-white/[.08] dark:bg-zinc-900"
+              >
+                {c.label}
+              </Link>
+            </StaggerItem>
+          ))}
+        </Stagger>
+      </section>
     </div>
   );
 }
