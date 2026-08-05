@@ -48,7 +48,10 @@ export default function CartPage() {
           {detailedItems.map(({ key, product, quantity, selection, unitPrice, lineTotal }) => {
             const labels = selectionLabels(product, selection);
             return (
-            <li key={key} className="flex items-center gap-4 p-4">
+            <li
+              key={key}
+              className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-3 p-4 sm:flex sm:gap-4"
+            >
               <div className="flex h-16 w-16 flex-none items-center justify-center rounded-xl bg-zinc-100 text-3xl dark:bg-zinc-800">
                 <span aria-hidden>{product.emoji}</span>
               </div>
@@ -66,7 +69,15 @@ export default function CartPage() {
                   {formatPrice(unitPrice)}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <button
+                type="button"
+                aria-label={`Retirer ${product.name}`}
+                onClick={() => removeItem(key)}
+                className="self-start p-1 text-zinc-400 hover:text-red-600 sm:order-last sm:self-center"
+              >
+                ✕
+              </button>
+              <div className="col-span-2 flex items-center gap-2 sm:col-auto">
                 <button
                   type="button"
                   aria-label="Diminuer la quantité"
@@ -85,17 +96,9 @@ export default function CartPage() {
                   +
                 </button>
               </div>
-              <div className="w-24 text-right font-medium">
+              <div className="text-right font-medium sm:w-24">
                 {formatPrice(lineTotal)}
               </div>
-              <button
-                type="button"
-                aria-label={`Retirer ${product.name}`}
-                onClick={() => removeItem(key)}
-                className="text-zinc-400 hover:text-red-600"
-              >
-                ✕
-              </button>
             </li>
             );
           })}
