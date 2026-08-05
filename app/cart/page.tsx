@@ -20,7 +20,7 @@ export default function CartPage() {
         </p>
         <Link
           href="/products"
-          className="mt-2 flex h-12 items-center justify-center rounded-full bg-blue-600 px-8 font-medium text-white transition-colors hover:bg-blue-700"
+          className="mt-2 flex h-12 items-center justify-center rounded-full bg-black px-8 font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
         >
           Voir les produits
         </Link>
@@ -53,7 +53,7 @@ export default function CartPage() {
               <div className="min-w-0 flex-1">
                 <Link
                   href={`/products/${product.slug}`}
-                  className="font-medium hover:text-blue-600"
+                  className="font-medium hover:underline"
                 >
                   {product.name}
                 </Link>
@@ -113,7 +113,7 @@ export default function CartPage() {
           </div>
           <button
             type="button"
-            className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-blue-600 font-medium text-white transition-colors hover:bg-blue-700"
+            className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-black font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
           >
             Passer la commande
           </button>

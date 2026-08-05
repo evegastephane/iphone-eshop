@@ -16,9 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "iPhone eShop — Téléphones & gadgets",
+  title: "eShop — Apple & Believe",
   description:
-    "Boutique en ligne de téléphones, gadgets et accessoires : iPhone, Galaxy, Pixel, montres connectées et plus.",
+    "Revendeur Apple (iPhone, Mac, iPad, AirPods, Apple TV, AirTags) et ambassadeur Believe. Audio, enceintes JBL et accessoires.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

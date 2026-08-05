@@ -1,5 +1,6 @@
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
+import { Stagger, StaggerItem } from "@/components/motion";
 import {
   CATEGORIES,
   getAllProducts,
@@ -24,12 +25,15 @@ export default async function ProductsPage({
     ? getAllProducts().filter((p) => p.category === active)
     : getAllProducts();
 
+  const activeLabel = CATEGORIES.find((c) => c.id === active)?.label;
+
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
-      <h1 className="text-3xl font-semibold tracking-tight">Boutique</h1>
+      <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+        {activeLabel ?? "Boutique"}
+      </h1>
       <p className="mt-1 text-zinc-500">
-        {products.length} produit{products.length > 1 ? "s" : ""} disponible
-        {products.length > 1 ? "s" : ""}
+        {products.length} produit{products.length > 1 ? "s" : ""}
       </p>
 
       <div className="mt-6 flex flex-wrap gap-2">
@@ -44,11 +48,16 @@ export default async function ProductsPage({
         ))}
       </div>
 
-      <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      <Stagger
+        key={active ?? "all"}
+        className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4"
+      >
         {products.map((product) => (
-          <ProductCard key={product.slug} product={product} />
+          <StaggerItem key={product.slug} className="h-full">
+            <ProductCard product={product} />
+          </StaggerItem>
         ))}
-      </div>
+      </Stagger>
     </div>
   );
 }
@@ -67,8 +76,8 @@ function FilterPill({
       href={href}
       className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
         active
-          ? "border-blue-600 bg-blue-600 text-white"
-          : "border-black/[.12] hover:border-blue-600 dark:border-white/[.15]"
+          ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
+          : "border-black/[.12] hover:border-black dark:border-white/[.15] dark:hover:border-white"
       }`}
     >
       {label}

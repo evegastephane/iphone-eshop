@@ -37,7 +37,10 @@ export default async function ProductPage({
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
-      <Link href="/products" className="text-sm text-blue-600">
+      <Link
+        href="/products"
+        className="text-sm text-zinc-500 hover:text-black dark:hover:text-white"
+      >
         ← Retour à la boutique
       </Link>
 

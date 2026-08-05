@@ -1,57 +1,99 @@
 import Link from "next/link";
+import Hero from "@/components/Hero";
 import ProductCard from "@/components/ProductCard";
-import { CATEGORIES, getFeaturedProducts } from "@/lib/products";
+import { Reveal, Stagger, StaggerItem } from "@/components/motion";
+import {
+  CATEGORIES,
+  getAppleHighlights,
+  getBelieveProducts,
+} from "@/lib/products";
 
 export default function Home() {
-  const featured = getFeaturedProducts();
+  const apple = getAppleHighlights();
+  const believe = getBelieveProducts().slice(0, 4);
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
-      <section className="flex flex-col items-center gap-6 py-20 text-center">
-        <span className="rounded-full bg-blue-600/10 px-4 py-1 text-sm font-medium text-blue-700 dark:text-blue-400">
-          Nouveautés 2026 disponibles
-        </span>
-        <h1 className="max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">
-          Les meilleurs téléphones & gadgets, livrés chez vous.
-        </h1>
-        <p className="max-w-xl text-lg text-zinc-500">
-          iPhone, Galaxy, Pixel, montres connectées, écouteurs et accessoires.
-          Des prix clairs, une livraison offerte dès 50 €.
-        </p>
-        <Link
-          href="/products"
-          className="flex h-12 items-center justify-center rounded-full bg-blue-600 px-8 font-medium text-white transition-colors hover:bg-blue-700"
-        >
-          Découvrir la boutique
-        </Link>
-      </section>
+    <div>
+      <Hero />
 
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {CATEGORIES.map((c) => (
-          <Link
-            key={c.id}
-            href={`/products?category=${c.id}`}
-            className="rounded-2xl border border-black/[.08] bg-white p-6 text-center transition-shadow hover:shadow-md dark:border-white/[.12] dark:bg-zinc-900"
-          >
-            <span className="font-semibold">{c.label}</span>
-          </Link>
-        ))}
-      </section>
-
-      <section className="py-16">
-        <div className="mb-6 flex items-end justify-between">
-          <h2 className="text-2xl font-semibold tracking-tight">
-            Produits en vedette
-          </h2>
-          <Link href="/products" className="text-sm font-medium text-blue-600">
-            Tout voir →
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {featured.map((product) => (
-            <ProductCard key={product.slug} product={product} />
+      {/* Apple en vedette (iPhone + Mac) */}
+      <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
+        <Reveal>
+          <div className="mb-6 flex items-end justify-between">
+            <div>
+              <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                Apple en vedette
+              </h2>
+              <p className="mt-1 text-zinc-500">
+                Les derniers iPhone et Mac, au cœur de la boutique.
+              </p>
+            </div>
+            <Link
+              href="/products?category=iphone"
+              className="hidden text-sm font-medium text-blue-600 sm:block"
+            >
+              Tous les iPhone →
+            </Link>
+          </div>
+        </Reveal>
+        <Stagger className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          {apple.map((product) => (
+            <StaggerItem key={product.slug} className="h-full">
+              <ProductCard product={product} />
+            </StaggerItem>
           ))}
-        </div>
+        </Stagger>
+      </section>
+
+      {/* Bannière Believe */}
+      <section className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+        <Reveal>
+          <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-600 px-6 py-12 text-white sm:px-12">
+            <span className="text-sm font-medium uppercase tracking-widest text-white/70">
+              Ambassadeur officiel
+            </span>
+            <h2 className="mt-2 max-w-lg text-3xl font-semibold tracking-tight">
+              Believe : chargeurs, écouteurs, câbles & powerbanks
+            </h2>
+            <p className="mt-3 max-w-lg text-white/80">
+              Une gamme fiable et abordable que nous représentons fièrement.
+            </p>
+            <Link
+              href="/products?category=believe"
+              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-white px-6 font-medium text-indigo-700 transition-transform hover:scale-105"
+            >
+              Découvrir Believe
+            </Link>
+          </div>
+        </Reveal>
+        <Stagger className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {believe.map((product) => (
+            <StaggerItem key={product.slug} className="h-full">
+              <ProductCard product={product} />
+            </StaggerItem>
+          ))}
+        </Stagger>
+      </section>
+
+      {/* Catégories */}
+      <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
+        <Reveal>
+          <h2 className="mb-6 text-2xl font-semibold tracking-tight sm:text-3xl">
+            Explorer par catégorie
+          </h2>
+        </Reveal>
+        <Stagger className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {CATEGORIES.map((c) => (
+            <StaggerItem key={c.id} className="h-full">
+              <Link
+                href={`/products?category=${c.id}`}
+                className="flex h-full items-center justify-center rounded-2xl border border-black/[.06] bg-white p-6 text-center font-medium transition-shadow hover:shadow-md dark:border-white/[.08] dark:bg-zinc-900"
+              >
+                {c.label}
+              </Link>
+            </StaggerItem>
+          ))}
+        </Stagger>
       </section>
     </div>
   );
