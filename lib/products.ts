@@ -8,11 +8,25 @@ export type Category =
   | "enceintes"
   | "believe";
 
+/** A choice that can change the price (screen size, storage…). */
+export type PriceOption = {
+  id: string;
+  label: string;
+  priceDelta: number;
+};
+
+export type ColorOption = {
+  id: string;
+  label: string;
+  hex: string;
+};
+
 export type Product = {
   slug: string;
   name: string;
   brand: string;
   category: Category;
+  /** Base ("à partir de") price before options. */
   price: number;
   /** Emoji used as a lightweight placeholder image. */
   emoji: string;
@@ -20,6 +34,15 @@ export type Product = {
   description: string;
   specs: Record<string, string>;
   featured?: boolean;
+  screenOptions?: PriceOption[];
+  storageOptions?: PriceOption[];
+  colorOptions?: ColorOption[];
+};
+
+export type Selection = {
+  screen?: string;
+  storage?: string;
+  color?: string;
 };
 
 export const CATEGORIES: { id: Category; label: string }[] = [
@@ -33,83 +56,175 @@ export const CATEGORIES: { id: Category; label: string }[] = [
   { id: "believe", label: "Believe" },
 ];
 
-// --- iPhone catalog (modèles 11 → 17, déclinaisons simple / Plus / Pro / Pro Max) ---
+// --- iPhone catalog: un produit "standard" et un produit "Pro" par génération.
+// La taille d'écran (ex. Pro / Pro Max), le stockage et la couleur sont des
+// options choisies sur la fiche produit.
 
-type IphoneVariant = {
-  suffix: string;
-  label: string;
-  priceDelta: number;
-  screen: string;
-  camera: string;
+type ScreenSpec = { id: string; label: string; priceDelta: number };
+
+type GenerationSpec = {
+  gen: number;
+  chip: string;
+  standardBase: number;
+  proBase: number;
+  standardScreens: ScreenSpec[];
+  proScreens: ScreenSpec[];
 };
 
-const IPHONE_VARIANTS: IphoneVariant[] = [
-  {
-    suffix: "",
-    label: "",
-    priceDelta: 0,
-    screen: "6,1\" Liquid Retina",
-    camera: "Double 12 Mpx",
-  },
-  {
-    suffix: "-plus",
-    label: "Plus",
-    priceDelta: 130,
-    screen: "6,7\" Liquid Retina",
-    camera: "Double 48 Mpx",
-  },
-  {
-    suffix: "-pro",
-    label: "Pro",
-    priceDelta: 320,
-    screen: "6,1\" Super Retina XDR ProMotion",
-    camera: "Triple 48 Mpx + LiDAR",
-  },
-  {
-    suffix: "-pro-max",
-    label: "Pro Max",
-    priceDelta: 470,
-    screen: "6,7\" Super Retina XDR ProMotion",
-    camera: "Triple 48 Mpx + téléobjectif",
-  },
+const STORAGE_STANDARD: PriceOption[] = [
+  { id: "128", label: "128 Go", priceDelta: 0 },
+  { id: "256", label: "256 Go", priceDelta: 120 },
+  { id: "512", label: "512 Go", priceDelta: 350 },
 ];
 
-const IPHONE_GENERATIONS: { gen: number; base: number; chip: string }[] = [
-  { gen: 11, base: 509, chip: "A13 Bionic" },
-  { gen: 12, base: 609, chip: "A14 Bionic" },
-  { gen: 13, base: 709, chip: "A15 Bionic" },
-  { gen: 14, base: 799, chip: "A15 / A16 Bionic" },
-  { gen: 15, base: 869, chip: "A16 / A17 Pro" },
-  { gen: 16, base: 969, chip: "A18 / A18 Pro" },
-  { gen: 17, base: 1069, chip: "A19 / A19 Pro" },
+const STORAGE_PRO: PriceOption[] = [
+  { id: "256", label: "256 Go", priceDelta: 0 },
+  { id: "512", label: "512 Go", priceDelta: 230 },
+  { id: "1024", label: "1 To", priceDelta: 570 },
+];
+
+const COLORS_STANDARD: ColorOption[] = [
+  { id: "noir", label: "Noir", hex: "#1d1d1f" },
+  { id: "blanc", label: "Blanc", hex: "#f5f5f7" },
+  { id: "bleu", label: "Bleu", hex: "#5a8bb0" },
+  { id: "vert", label: "Vert", hex: "#a4c3a2" },
+  { id: "rouge", label: "(PRODUCT)RED", hex: "#b60d16" },
+];
+
+const COLORS_PRO: ColorOption[] = [
+  { id: "titane-naturel", label: "Titane naturel", hex: "#b9b3a9" },
+  { id: "titane-noir", label: "Titane noir", hex: "#3b3b3d" },
+  { id: "titane-blanc", label: "Titane blanc", hex: "#eceae5" },
+  { id: "titane-desert", label: "Titane désert", hex: "#bda583" },
+];
+
+const IPHONE_GENERATIONS: GenerationSpec[] = [
+  {
+    gen: 11,
+    chip: "A13 Bionic",
+    standardBase: 509,
+    proBase: 829,
+    standardScreens: [{ id: "6.1", label: "6,1\"", priceDelta: 0 }],
+    proScreens: [
+      { id: "pro", label: "Pro · 5,8\"", priceDelta: 0 },
+      { id: "pro-max", label: "Pro Max · 6,5\"", priceDelta: 120 },
+    ],
+  },
+  {
+    gen: 12,
+    chip: "A14 Bionic",
+    standardBase: 609,
+    proBase: 929,
+    standardScreens: [{ id: "6.1", label: "6,1\"", priceDelta: 0 }],
+    proScreens: [
+      { id: "pro", label: "Pro · 6,1\"", priceDelta: 0 },
+      { id: "pro-max", label: "Pro Max · 6,7\"", priceDelta: 120 },
+    ],
+  },
+  {
+    gen: 13,
+    chip: "A15 Bionic",
+    standardBase: 709,
+    proBase: 1029,
+    standardScreens: [{ id: "6.1", label: "6,1\"", priceDelta: 0 }],
+    proScreens: [
+      { id: "pro", label: "Pro · 6,1\"", priceDelta: 0 },
+      { id: "pro-max", label: "Pro Max · 6,7\"", priceDelta: 120 },
+    ],
+  },
+  {
+    gen: 14,
+    chip: "A15 / A16 Bionic",
+    standardBase: 799,
+    proBase: 1129,
+    standardScreens: [
+      { id: "6.1", label: "6,1\"", priceDelta: 0 },
+      { id: "6.7", label: "Plus · 6,7\"", priceDelta: 120 },
+    ],
+    proScreens: [
+      { id: "pro", label: "Pro · 6,1\"", priceDelta: 0 },
+      { id: "pro-max", label: "Pro Max · 6,7\"", priceDelta: 130 },
+    ],
+  },
+  {
+    gen: 15,
+    chip: "A16 / A17 Pro",
+    standardBase: 869,
+    proBase: 1229,
+    standardScreens: [
+      { id: "6.1", label: "6,1\"", priceDelta: 0 },
+      { id: "6.7", label: "Plus · 6,7\"", priceDelta: 120 },
+    ],
+    proScreens: [
+      { id: "pro", label: "Pro · 6,1\"", priceDelta: 0 },
+      { id: "pro-max", label: "Pro Max · 6,7\"", priceDelta: 130 },
+    ],
+  },
+  {
+    gen: 16,
+    chip: "A18 / A18 Pro",
+    standardBase: 969,
+    proBase: 1329,
+    standardScreens: [
+      { id: "6.1", label: "6,1\"", priceDelta: 0 },
+      { id: "6.7", label: "Plus · 6,7\"", priceDelta: 120 },
+    ],
+    proScreens: [
+      { id: "pro", label: "Pro · 6,3\"", priceDelta: 0 },
+      { id: "pro-max", label: "Pro Max · 6,9\"", priceDelta: 150 },
+    ],
+  },
+  {
+    gen: 17,
+    chip: "A19 / A19 Pro",
+    standardBase: 1069,
+    proBase: 1479,
+    standardScreens: [
+      { id: "6.1", label: "6,1\"", priceDelta: 0 },
+      { id: "6.7", label: "Plus · 6,7\"", priceDelta: 120 },
+    ],
+    proScreens: [
+      { id: "pro", label: "Pro · 6,3\"", priceDelta: 0 },
+      { id: "pro-max", label: "Pro Max · 6,9\"", priceDelta: 150 },
+    ],
+  },
 ];
 
 function buildIphones(): Product[] {
   const products: Product[] = [];
-  for (const { gen, base, chip } of IPHONE_GENERATIONS) {
-    for (const v of IPHONE_VARIANTS) {
-      const name = `iPhone ${gen}${v.label ? ` ${v.label}` : ""}`;
-      const isTop = v.suffix === "-pro-max";
-      products.push({
-        slug: `iphone-${gen}${v.suffix}`,
-        name,
-        brand: "Apple",
-        category: "iphone",
-        price: base + v.priceDelta,
-        emoji: "📱",
-        tagline: `${chip}. ${v.camera}.`,
-        description: `Le ${name} embarque la puce ${chip}, un écran ${v.screen} et un système photo ${v.camera.toLowerCase()}. Le smartphone incontournable de la boutique.`,
-        specs: {
-          Écran: v.screen,
-          Puce: chip,
-          Caméra: v.camera,
-          "5G": "Oui",
-          Charge: "USB-C / Lightning selon modèle",
-        },
-        // Met en avant les modèles récents haut de gamme.
-        featured: gen >= 16 && isTop,
-      });
-    }
+  for (const g of IPHONE_GENERATIONS) {
+    // Ligne standard
+    products.push({
+      slug: `iphone-${g.gen}`,
+      name: `iPhone ${g.gen}`,
+      brand: "Apple",
+      category: "iphone",
+      price: g.standardBase,
+      emoji: "📱",
+      tagline: `${g.chip}. Le smartphone du quotidien.`,
+      description: `L'iPhone ${g.gen} embarque la puce ${g.chip}. Choisissez la taille d'écran, le stockage et la couleur.`,
+      specs: { Puce: g.chip, "5G": "Oui", "Face ID": "Oui" },
+      featured: g.gen >= 16,
+      screenOptions: g.standardScreens,
+      storageOptions: STORAGE_STANDARD,
+      colorOptions: COLORS_STANDARD,
+    });
+    // Ligne Pro (regroupe Pro et Pro Max via la taille d'écran)
+    products.push({
+      slug: `iphone-${g.gen}-pro`,
+      name: `iPhone ${g.gen} Pro`,
+      brand: "Apple",
+      category: "iphone",
+      price: g.proBase,
+      emoji: "📱",
+      tagline: `${g.chip}. Système photo Pro, châssis premium.`,
+      description: `L'iPhone ${g.gen} Pro avec puce ${g.chip}. Choisissez entre Pro et Pro Max, le stockage et la finition.`,
+      specs: { Puce: g.chip, "5G": "Oui", "Face ID": "Oui", "Photo": "Système Pro" },
+      featured: g.gen >= 16,
+      screenOptions: g.proScreens,
+      storageOptions: STORAGE_PRO,
+      colorOptions: COLORS_PRO,
+    });
   }
   return products;
 }
@@ -131,11 +246,20 @@ const OTHER_PRODUCTS: Product[] = [
     specs: {
       Puce: "Apple M3",
       Écran: "13,6\" Liquid Retina",
-      Mémoire: "16 Go",
-      Stockage: "256 Go SSD",
       Autonomie: "Jusqu'à 18 h",
     },
     featured: true,
+    storageOptions: [
+      { id: "256", label: "256 Go", priceDelta: 0 },
+      { id: "512", label: "512 Go", priceDelta: 230 },
+      { id: "1024", label: "1 To", priceDelta: 460 },
+    ],
+    colorOptions: [
+      { id: "minuit", label: "Minuit", hex: "#2e3641" },
+      { id: "lumiere-stellaire", label: "Lumière stellaire", hex: "#f0e6d2" },
+      { id: "gris-sideral", label: "Gris sidéral", hex: "#7d7e80" },
+      { id: "argent", label: "Argent", hex: "#e3e4e6" },
+    ],
   },
   {
     slug: "macbook-pro-14-m3-pro",
@@ -150,11 +274,18 @@ const OTHER_PRODUCTS: Product[] = [
     specs: {
       Puce: "Apple M3 Pro",
       Écran: "14,2\" Liquid Retina XDR",
-      Mémoire: "18 Go",
-      Stockage: "512 Go SSD",
       Ports: "3x Thunderbolt 4, HDMI, SDXC",
     },
     featured: true,
+    storageOptions: [
+      { id: "512", label: "512 Go", priceDelta: 0 },
+      { id: "1024", label: "1 To", priceDelta: 230 },
+      { id: "2048", label: "2 To", priceDelta: 690 },
+    ],
+    colorOptions: [
+      { id: "noir-sideral", label: "Noir sidéral", hex: "#2b2b2d" },
+      { id: "argent", label: "Argent", hex: "#e3e4e6" },
+    ],
   },
   {
     slug: "imac-24-m3",
@@ -166,12 +297,13 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "Tout-en-un coloré avec puce M3.",
     description:
       "L'iMac 24\" M3 réunit un écran 4,5K éclatant et la puissance de la puce M3 dans un design fin et coloré.",
-    specs: {
-      Puce: "Apple M3",
-      Écran: "24\" 4,5K Retina",
-      Mémoire: "8 Go",
-      Stockage: "256 Go SSD",
-    },
+    specs: { Puce: "Apple M3", Écran: "24\" 4,5K Retina" },
+    colorOptions: [
+      { id: "bleu", label: "Bleu", hex: "#6b8fb5" },
+      { id: "vert", label: "Vert", hex: "#a4c3a2" },
+      { id: "rose", label: "Rose", hex: "#e6b0b8" },
+      { id: "argent", label: "Argent", hex: "#e3e4e6" },
+    ],
   },
   // iPad
   {
@@ -184,13 +316,19 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "Puce M2, compatible Apple Pencil Pro.",
     description:
       "L'iPad Air M2 est polyvalent, léger et puissant, idéal pour dessiner, travailler et regarder.",
-    specs: {
-      Puce: "Apple M2",
-      Écran: "11\" Liquid Retina",
-      Stockage: "128 Go",
-      Accessoire: "Apple Pencil Pro",
-    },
+    specs: { Puce: "Apple M2", Écran: "11\" Liquid Retina" },
     featured: true,
+    storageOptions: [
+      { id: "128", label: "128 Go", priceDelta: 0 },
+      { id: "256", label: "256 Go", priceDelta: 70 },
+      { id: "512", label: "512 Go", priceDelta: 230 },
+    ],
+    colorOptions: [
+      { id: "gris-sideral", label: "Gris sidéral", hex: "#7d7e80" },
+      { id: "bleu", label: "Bleu", hex: "#6b8fb5" },
+      { id: "mauve", label: "Mauve", hex: "#b7a7cf" },
+      { id: "lumiere-stellaire", label: "Lumière stellaire", hex: "#f0e6d2" },
+    ],
   },
   {
     slug: "ipad-pro-m4-11",
@@ -202,12 +340,16 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "Écran Ultra Retina XDR OLED, puce M4.",
     description:
       "L'iPad Pro M4 est l'iPad le plus fin et le plus puissant, avec un écran OLED tandem exceptionnel.",
-    specs: {
-      Puce: "Apple M4",
-      Écran: "11\" Ultra Retina XDR OLED",
-      Stockage: "256 Go",
-      Accessoire: "Magic Keyboard",
-    },
+    specs: { Puce: "Apple M4", Écran: "11\" Ultra Retina XDR OLED" },
+    storageOptions: [
+      { id: "256", label: "256 Go", priceDelta: 0 },
+      { id: "512", label: "512 Go", priceDelta: 230 },
+      { id: "1024", label: "1 To", priceDelta: 690 },
+    ],
+    colorOptions: [
+      { id: "noir-sideral", label: "Noir sidéral", hex: "#2b2b2d" },
+      { id: "argent", label: "Argent", hex: "#e3e4e6" },
+    ],
   },
   {
     slug: "ipad-10",
@@ -219,11 +361,17 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "L'iPad essentiel, coloré et abordable.",
     description:
       "L'iPad 10e génération est parfait pour naviguer, étudier et se divertir au quotidien.",
-    specs: {
-      Puce: "A14 Bionic",
-      Écran: "10,9\" Liquid Retina",
-      Stockage: "64 Go",
-    },
+    specs: { Puce: "A14 Bionic", Écran: "10,9\" Liquid Retina" },
+    storageOptions: [
+      { id: "64", label: "64 Go", priceDelta: 0 },
+      { id: "256", label: "256 Go", priceDelta: 150 },
+    ],
+    colorOptions: [
+      { id: "argent", label: "Argent", hex: "#e3e4e6" },
+      { id: "bleu", label: "Bleu", hex: "#6b8fb5" },
+      { id: "rose", label: "Rose", hex: "#e6b0b8" },
+      { id: "jaune", label: "Jaune", hex: "#e8cf7a" },
+    ],
   },
   // Audio — Apple
   {
@@ -240,7 +388,6 @@ const OTHER_PRODUCTS: Product[] = [
       Puce: "Apple H2",
       Réduction: "Active + Transparence",
       Autonomie: "6 h (30 h avec boîtier)",
-      Connectique: "USB-C",
     },
     featured: true,
   },
@@ -254,11 +401,7 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "Confort ouvert, son spatial personnalisé.",
     description:
       "Les AirPods 4 proposent un nouveau design ergonomique et un son immersif au quotidien.",
-    specs: {
-      Puce: "Apple H2",
-      Autonomie: "5 h (30 h avec boîtier)",
-      Audio: "Spatial personnalisé",
-    },
+    specs: { Puce: "Apple H2", Autonomie: "5 h (30 h avec boîtier)" },
   },
   {
     slug: "airpods-max",
@@ -270,12 +413,13 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "Casque circum-auriculaire haute-fidélité.",
     description:
       "Le casque AirPods Max délivre un son d'exception avec réduction de bruit active et audio spatial.",
-    specs: {
-      Type: "Casque circum-auriculaire",
-      Réduction: "Active",
-      Autonomie: "20 h",
-      Connectique: "USB-C",
-    },
+    specs: { Type: "Casque circum-auriculaire", Autonomie: "20 h" },
+    colorOptions: [
+      { id: "gris-sideral", label: "Gris sidéral", hex: "#7d7e80" },
+      { id: "argent", label: "Argent", hex: "#e3e4e6" },
+      { id: "bleu", label: "Bleu", hex: "#6b8fb5" },
+      { id: "violet", label: "Violet", hex: "#b7a7cf" },
+    ],
   },
   // Audio — hors Apple
   {
@@ -288,12 +432,11 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "La référence du casque à réduction de bruit.",
     description:
       "Le casque Sony WH-1000XM5 offre une réduction de bruit leader et un son riche pour les longs trajets.",
-    specs: {
-      Type: "Casque sans fil",
-      Réduction: "Active adaptative",
-      Autonomie: "30 h",
-      Bluetooth: "5.2",
-    },
+    specs: { Type: "Casque sans fil", Autonomie: "30 h", Bluetooth: "5.2" },
+    colorOptions: [
+      { id: "noir", label: "Noir", hex: "#1d1d1f" },
+      { id: "argent", label: "Argent", hex: "#d9d6cf" },
+    ],
   },
   {
     slug: "jbl-tune-flex",
@@ -305,12 +448,7 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "Écouteurs Bluetooth avec ANC.",
     description:
       "Les JBL Tune Flex offrent un son JBL Pure Bass et une réduction de bruit active, sans la marque Apple.",
-    specs: {
-      Type: "Écouteurs Bluetooth",
-      Réduction: "Active",
-      Autonomie: "Jusqu'à 32 h",
-      Résistance: "IPX4",
-    },
+    specs: { Type: "Écouteurs Bluetooth", Autonomie: "Jusqu'à 32 h", Résistance: "IPX4" },
   },
   {
     slug: "ecouteurs-filaires-usbc",
@@ -322,11 +460,7 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "Écouteurs intra-auriculaires filaires.",
     description:
       "Des écouteurs filaires USB-C fiables avec télécommande et micro intégrés.",
-    specs: {
-      Type: "Filaire intra-auriculaire",
-      Connectique: "USB-C",
-      Micro: "Oui",
-    },
+    specs: { Type: "Filaire intra-auriculaire", Connectique: "USB-C" },
   },
   {
     slug: "ecouteurs-filaires-jack",
@@ -338,11 +472,7 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "Son Pure Bass, prise jack universelle.",
     description:
       "Écouteurs filaires JBL avec prise jack 3,5 mm, compatibles avec la plupart des appareils.",
-    specs: {
-      Type: "Filaire intra-auriculaire",
-      Connectique: "Jack 3,5 mm",
-      Micro: "Oui",
-    },
+    specs: { Type: "Filaire intra-auriculaire", Connectique: "Jack 3,5 mm" },
   },
   // Enceintes JBL
   {
@@ -355,13 +485,14 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "Enceinte portable robuste, son puissant.",
     description:
       "L'enceinte JBL Flip 6 délivre un son clair et des basses profondes, résistante à l'eau et à la poussière.",
-    specs: {
-      Puissance: "30 W",
-      Autonomie: "12 h",
-      Résistance: "IP67",
-      Bluetooth: "5.1",
-    },
+    specs: { Puissance: "30 W", Autonomie: "12 h", Résistance: "IP67" },
     featured: true,
+    colorOptions: [
+      { id: "noir", label: "Noir", hex: "#1d1d1f" },
+      { id: "bleu", label: "Bleu", hex: "#3a6ea5" },
+      { id: "rouge", label: "Rouge", hex: "#b60d16" },
+      { id: "gris", label: "Gris", hex: "#8a8a8d" },
+    ],
   },
   {
     slug: "jbl-charge-5",
@@ -373,12 +504,7 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "Grosses basses + batterie qui recharge vos appareils.",
     description:
       "La JBL Charge 5 combine un son puissant et une batterie intégrée pour recharger votre téléphone.",
-    specs: {
-      Puissance: "40 W",
-      Autonomie: "20 h",
-      Résistance: "IP67",
-      Powerbank: "Oui",
-    },
+    specs: { Puissance: "40 W", Autonomie: "20 h", Résistance: "IP67" },
   },
   {
     slug: "jbl-go-4",
@@ -390,11 +516,7 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "Mini enceinte nomade ultra-compacte.",
     description:
       "La JBL Go 4 tient dans la poche et offre un son étonnant partout où vous allez.",
-    specs: {
-      Puissance: "4,2 W",
-      Autonomie: "9 h",
-      Résistance: "IP67",
-    },
+    specs: { Puissance: "4,2 W", Autonomie: "9 h", Résistance: "IP67" },
   },
   // TV & Maison
   {
@@ -407,12 +529,7 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "Streaming 4K Dolby Vision, puce A15.",
     description:
       "L'Apple TV 4K transforme votre téléviseur avec un streaming fluide, Dolby Atmos et l'écosystème Apple.",
-    specs: {
-      Vidéo: "4K Dolby Vision",
-      Puce: "A15 Bionic",
-      Stockage: "128 Go",
-      Audio: "Dolby Atmos",
-    },
+    specs: { Vidéo: "4K Dolby Vision", Puce: "A15 Bionic", Audio: "Dolby Atmos" },
   },
   {
     slug: "airtag",
@@ -424,11 +541,7 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "Localisez vos objets dans l'app Localiser.",
     description:
       "L'AirTag vous aide à retrouver clés, sac ou valise grâce au réseau Localiser d'Apple.",
-    specs: {
-      Localisation: "Précise (U1)",
-      Batterie: "1 an (remplaçable)",
-      Résistance: "IP67",
-    },
+    specs: { Localisation: "Précise (U1)", Batterie: "1 an (remplaçable)" },
   },
   {
     slug: "airtag-pack-4",
@@ -440,11 +553,7 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "Quatre AirTags pour tout suivre.",
     description:
       "Le pack de 4 AirTags pour équiper tous vos objets importants à prix réduit.",
-    specs: {
-      Quantité: "4",
-      Localisation: "Précise (U1)",
-      Batterie: "1 an (remplaçable)",
-    },
+    specs: { Quantité: "4", Localisation: "Précise (U1)" },
   },
   // Accessoires
   {
@@ -457,11 +566,7 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "Adaptateur secteur officiel Apple.",
     description:
       "Le chargeur officiel Apple 20 W USB-C recharge rapidement iPhone et iPad en toute sécurité.",
-    specs: {
-      Puissance: "20 W",
-      Connectique: "USB-C",
-      Origine: "Officiel Apple",
-    },
+    specs: { Puissance: "20 W", Connectique: "USB-C", Origine: "Officiel Apple" },
   },
   {
     slug: "magsafe-charger",
@@ -473,11 +578,7 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "Recharge sans fil aimantée jusqu'à 15 W.",
     description:
       "Le chargeur MagSafe s'aligne parfaitement pour une recharge sans fil rapide et pratique.",
-    specs: {
-      Puissance: "Jusqu'à 15 W",
-      Compatibilité: "iPhone 12 et +",
-      Longueur: "1 m",
-    },
+    specs: { Puissance: "Jusqu'à 15 W", Compatibilité: "iPhone 12 et +" },
   },
   {
     slug: "coque-silicone-iphone",
@@ -489,11 +590,13 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "Protection souple, compatible MagSafe.",
     description:
       "Une coque en silicone toucher doux qui protège votre iPhone tout en restant fine.",
-    specs: {
-      Matière: "Silicone",
-      MagSafe: "Compatible",
-      Protection: "Chocs & rayures",
-    },
+    specs: { Matière: "Silicone", MagSafe: "Compatible" },
+    colorOptions: [
+      { id: "noir", label: "Noir", hex: "#1d1d1f" },
+      { id: "bleu", label: "Bleu", hex: "#3a6ea5" },
+      { id: "rose", label: "Rose", hex: "#e6b0b8" },
+      { id: "vert", label: "Vert", hex: "#a4c3a2" },
+    ],
   },
   {
     slug: "verre-trempe-iphone",
@@ -505,13 +608,9 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "Protection d'écran 9H, pose facile.",
     description:
       "Lot de deux verres trempés ultra-résistants avec kit de pose sans bulles.",
-    specs: {
-      Dureté: "9H",
-      Quantité: "2",
-      Pose: "Kit d'alignement inclus",
-    },
+    specs: { Dureté: "9H", Quantité: "2" },
   },
-  // Believe (marque dont la boutique est ambassadrice)
+  // Believe
   {
     slug: "believe-powerbank-20k",
     name: "Believe PowerBank 20 000 mAh",
@@ -522,11 +621,7 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "Charge rapide 30 W, deux appareils à la fois.",
     description:
       "La batterie externe Believe 20K garde vos appareils chargés toute la journée avec la charge rapide USB-C PD.",
-    specs: {
-      Capacité: "20 000 mAh",
-      Sorties: "2x USB-C + 1x USB-A",
-      Puissance: "30 W",
-    },
+    specs: { Capacité: "20 000 mAh", Puissance: "30 W" },
     featured: true,
   },
   {
@@ -539,11 +634,7 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "Compact, 3 ports, charge un MacBook.",
     description:
       "Le chargeur Believe GaN 65 W recharge simultanément téléphone, tablette et ordinateur portable.",
-    specs: {
-      Puissance: "65 W",
-      Ports: "2x USB-C + 1x USB-A",
-      Technologie: "GaN",
-    },
+    specs: { Puissance: "65 W", Technologie: "GaN" },
     featured: true,
   },
   {
@@ -556,12 +647,7 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "Écouteurs sans fil à réduction de bruit.",
     description:
       "Les écouteurs Believe ANC offrent un son équilibré et une réduction de bruit efficace à petit prix.",
-    specs: {
-      Type: "Écouteurs Bluetooth",
-      Réduction: "Active",
-      Autonomie: "Jusqu'à 28 h",
-      Résistance: "IPX5",
-    },
+    specs: { Type: "Écouteurs Bluetooth", Autonomie: "Jusqu'à 28 h" },
   },
   {
     slug: "believe-cable-usbc-2m",
@@ -573,11 +659,7 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "Câble tressé 100 W, ultra résistant.",
     description:
       "Le câble Believe USB-C vers USB-C tressé supporte la charge rapide 100 W et un transfert de données rapide.",
-    specs: {
-      Longueur: "2 m",
-      Puissance: "100 W",
-      Gaine: "Nylon tressé",
-    },
+    specs: { Longueur: "2 m", Puissance: "100 W" },
   },
   {
     slug: "believe-chargeur-sans-fil",
@@ -589,11 +671,7 @@ const OTHER_PRODUCTS: Product[] = [
     tagline: "Socle de charge à induction 15 W.",
     description:
       "Le chargeur sans fil Believe 15 W recharge votre téléphone d'un simple geste, câble USB-C inclus.",
-    specs: {
-      Puissance: "15 W",
-      Type: "Induction Qi",
-      Câble: "USB-C inclus",
-    },
+    specs: { Puissance: "15 W", Type: "Induction Qi" },
   },
 ];
 
@@ -624,6 +702,57 @@ export function getAppleHighlights(): Product[] {
 
 export function getBelieveProducts(): Product[] {
   return PRODUCTS.filter((p) => p.category === "believe");
+}
+
+export function hasOptions(product: Product): boolean {
+  return Boolean(
+    product.screenOptions?.length ||
+      product.storageOptions?.length ||
+      product.colorOptions?.length,
+  );
+}
+
+function optionDelta(
+  options: PriceOption[] | undefined,
+  id: string | undefined,
+): number {
+  if (!options || !id) return 0;
+  return options.find((o) => o.id === id)?.priceDelta ?? 0;
+}
+
+/** Prix final d'un produit compte tenu des options sélectionnées. */
+export function getUnitPrice(product: Product, selection: Selection): number {
+  return (
+    product.price +
+    optionDelta(product.screenOptions, selection.screen) +
+    optionDelta(product.storageOptions, selection.storage)
+  );
+}
+
+/** Sélection par défaut (première option de chaque groupe). */
+export function defaultSelection(product: Product): Selection {
+  return {
+    screen: product.screenOptions?.[0]?.id,
+    storage: product.storageOptions?.[0]?.id,
+    color: product.colorOptions?.[0]?.id,
+  };
+}
+
+/** Libellés lisibles des options sélectionnées, pour l'affichage du panier. */
+export function selectionLabels(
+  product: Product,
+  selection: Selection,
+): string[] {
+  const parts: string[] = [];
+  const screen = product.screenOptions?.find((o) => o.id === selection.screen);
+  const storage = product.storageOptions?.find(
+    (o) => o.id === selection.storage,
+  );
+  const color = product.colorOptions?.find((o) => o.id === selection.color);
+  if (screen) parts.push(screen.label);
+  if (storage) parts.push(storage.label);
+  if (color) parts.push(color.label);
+  return parts;
 }
 
 export function formatPrice(value: number): string {
