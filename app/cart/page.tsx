@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
-import { formatPrice } from "@/lib/products";
+import { formatPrice, selectionLabels } from "@/lib/products";
 
 export default function CartPage() {
   const { detailedItems, updateQuantity, removeItem, clear, totalPrice } =
@@ -45,8 +45,10 @@ export default function CartPage() {
 
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
         <ul className="lg:col-span-2 divide-y divide-black/[.08] rounded-2xl border border-black/[.08] bg-white dark:divide-white/[.12] dark:border-white/[.12] dark:bg-zinc-900">
-          {detailedItems.map(({ product, quantity }) => (
-            <li key={product.slug} className="flex items-center gap-4 p-4">
+          {detailedItems.map(({ key, product, quantity, selection, unitPrice, lineTotal }) => {
+            const labels = selectionLabels(product, selection);
+            return (
+            <li key={key} className="flex items-center gap-4 p-4">
               <div className="flex h-16 w-16 flex-none items-center justify-center rounded-xl bg-zinc-100 text-3xl dark:bg-zinc-800">
                 <span aria-hidden>{product.emoji}</span>
               </div>
@@ -57,15 +59,18 @@ export default function CartPage() {
                 >
                   {product.name}
                 </Link>
+                {labels.length > 0 && (
+                  <p className="text-xs text-zinc-500">{labels.join(" · ")}</p>
+                )}
                 <p className="text-sm text-zinc-500">
-                  {formatPrice(product.price)}
+                  {formatPrice(unitPrice)}
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   aria-label="Diminuer la quantité"
-                  onClick={() => updateQuantity(product.slug, quantity - 1)}
+                  onClick={() => updateQuantity(key, quantity - 1)}
                   className="flex h-8 w-8 items-center justify-center rounded-full border border-black/[.15] dark:border-white/[.2]"
                 >
                   −
@@ -74,25 +79,26 @@ export default function CartPage() {
                 <button
                   type="button"
                   aria-label="Augmenter la quantité"
-                  onClick={() => updateQuantity(product.slug, quantity + 1)}
+                  onClick={() => updateQuantity(key, quantity + 1)}
                   className="flex h-8 w-8 items-center justify-center rounded-full border border-black/[.15] dark:border-white/[.2]"
                 >
                   +
                 </button>
               </div>
               <div className="w-24 text-right font-medium">
-                {formatPrice(product.price * quantity)}
+                {formatPrice(lineTotal)}
               </div>
               <button
                 type="button"
                 aria-label={`Retirer ${product.name}`}
-                onClick={() => removeItem(product.slug)}
+                onClick={() => removeItem(key)}
                 className="text-zinc-400 hover:text-red-600"
               >
                 ✕
               </button>
             </li>
-          ))}
+            );
+          })}
         </ul>
 
         <aside className="h-fit rounded-2xl border border-black/[.08] bg-white p-6 dark:border-white/[.12] dark:bg-zinc-900">

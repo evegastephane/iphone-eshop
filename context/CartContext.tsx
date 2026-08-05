@@ -7,31 +7,49 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
-import { getProductBySlug, type Product } from "@/lib/products";
+import {
+  getProductBySlug,
+  getUnitPrice,
+  type Product,
+  type Selection,
+} from "@/lib/products";
 
 export type CartItem = {
+  /** Unique per (slug + selected options). */
+  key: string;
   slug: string;
   quantity: number;
+  selection: Selection;
+};
+
+export type DetailedCartItem = {
+  key: string;
+  product: Product;
+  quantity: number;
+  selection: Selection;
+  unitPrice: number;
+  lineTotal: number;
 };
 
 type CartContextValue = {
   items: CartItem[];
-  addItem: (slug: string, quantity?: number) => void;
-  removeItem: (slug: string) => void;
-  updateQuantity: (slug: string, quantity: number) => void;
+  addItem: (slug: string, selection: Selection, quantity?: number) => void;
+  removeItem: (key: string) => void;
+  updateQuantity: (key: string, quantity: number) => void;
   clear: () => void;
   totalItems: number;
   totalPrice: number;
-  detailedItems: { product: Product; quantity: number }[];
+  detailedItems: DetailedCartItem[];
 };
 
 const STORAGE_KEY = "iphone-eshop-cart";
 
-/**
- * Small external store so the cart can be read with `useSyncExternalStore`.
- * This keeps localStorage (an external, client-only source) out of effects and
- * gives a stable empty snapshot during server rendering.
- */
+function makeKey(slug: string, selection: Selection): string {
+  return [slug, selection.screen, selection.storage, selection.color]
+    .map((v) => v ?? "")
+    .join("|");
+}
+
 const EMPTY: CartItem[] = [];
 
 let items: CartItem[] = EMPTY;
@@ -44,7 +62,11 @@ function load(): void {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     const parsed: unknown = raw ? JSON.parse(raw) : null;
-    if (Array.isArray(parsed)) items = parsed as CartItem[];
+    if (Array.isArray(parsed)) {
+      items = (parsed as CartItem[]).filter(
+        (i) => i && typeof i.slug === "string" && typeof i.key === "string",
+      );
+    }
   } catch {
     // ignore corrupted storage
   }
@@ -75,26 +97,27 @@ function getServerSnapshot(): CartItem[] {
   return EMPTY;
 }
 
-function addItem(slug: string, quantity = 1): void {
-  const existing = items.find((i) => i.slug === slug);
+function addItem(slug: string, selection: Selection, quantity = 1): void {
+  const key = makeKey(slug, selection);
+  const existing = items.find((i) => i.key === key);
   setItems(
     existing
       ? items.map((i) =>
-          i.slug === slug ? { ...i, quantity: i.quantity + quantity } : i,
+          i.key === key ? { ...i, quantity: i.quantity + quantity } : i,
         )
-      : [...items, { slug, quantity }],
+      : [...items, { key, slug, quantity, selection }],
   );
 }
 
-function removeItem(slug: string): void {
-  setItems(items.filter((i) => i.slug !== slug));
+function removeItem(key: string): void {
+  setItems(items.filter((i) => i.key !== key));
 }
 
-function updateQuantity(slug: string, quantity: number): void {
+function updateQuantity(key: string, quantity: number): void {
   setItems(
     quantity <= 0
-      ? items.filter((i) => i.slug !== slug)
-      : items.map((i) => (i.slug === slug ? { ...i, quantity } : i)),
+      ? items.filter((i) => i.key !== key)
+      : items.map((i) => (i.key === key ? { ...i, quantity } : i)),
   );
 }
 
@@ -111,14 +134,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
     getServerSnapshot,
   );
 
-  const detailedItems = useMemo(
+  const detailedItems = useMemo<DetailedCartItem[]>(
     () =>
       current
         .map((item) => {
           const product = getProductBySlug(item.slug);
-          return product ? { product, quantity: item.quantity } : null;
+          if (!product) return null;
+          const unitPrice = getUnitPrice(product, item.selection);
+          return {
+            key: item.key,
+            product,
+            quantity: item.quantity,
+            selection: item.selection,
+            unitPrice,
+            lineTotal: unitPrice * item.quantity,
+          };
         })
-        .filter((v): v is { product: Product; quantity: number } => v !== null),
+        .filter((v): v is DetailedCartItem => v !== null),
     [current],
   );
 
@@ -128,11 +160,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const totalPrice = useMemo(
-    () =>
-      detailedItems.reduce(
-        (sum, { product, quantity }) => sum + product.price * quantity,
-        0,
-      ),
+    () => detailedItems.reduce((sum, i) => sum + i.lineTotal, 0),
     [detailedItems],
   );
 

@@ -1,12 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import AddToCartButton from "@/components/AddToCartButton";
-import {
-  formatPrice,
-  getAllProducts,
-  getProductBySlug,
-} from "@/lib/products";
+import ProductConfigurator from "@/components/ProductConfigurator";
+import { getAllProducts, getProductBySlug } from "@/lib/products";
 
 export function generateStaticParams() {
   return getAllProducts().map((p) => ({ slug: p.slug }));
@@ -57,16 +53,13 @@ export default async function ProductPage({
             {product.name}
           </h1>
           <p className="mt-2 text-lg text-zinc-500">{product.tagline}</p>
-          <span className="mt-4 text-3xl font-semibold">
-            {formatPrice(product.price)}
-          </span>
 
           <p className="mt-6 leading-relaxed text-zinc-600 dark:text-zinc-300">
             {product.description}
           </p>
 
           <div className="mt-8">
-            <AddToCartButton slug={product.slug} />
+            <ProductConfigurator product={product} />
           </div>
 
           <dl className="mt-10 divide-y divide-black/[.08] border-t border-black/[.08] dark:divide-white/[.12] dark:border-white/[.12]">
